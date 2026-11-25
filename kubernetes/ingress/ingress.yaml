@@ -1,0 +1,89 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dungeonbox
+  namespace: dungeonbox
+  labels:
+    app.kubernetes.io/part-of: dungeonbox
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: dungeonbox-root-to-auth@kubernetescrd,dungeonbox-module-trailing-slash@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - dungeon-box.duckdns.org
+      secretName: dungeonbox-tls
+  rules:
+    - host: dungeon-box.duckdns.org
+      http:
+        paths:
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-backend
+                port:
+                  number: 3000
+          - path: /api/store
+            pathType: Prefix
+            backend:
+              service:
+                name: store-backend
+                port:
+                  number: 3001
+          - path: /api/ranking
+            pathType: Prefix
+            backend:
+              service:
+                name: ranking-backend
+                port:
+                  number: 3002
+          - path: /api/game
+            pathType: Prefix
+            backend:
+              service:
+                name: game-backend
+                port:
+                  number: 3003
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-frontend
+                port:
+                  number: 8080
+          - path: /store
+            pathType: Prefix
+            backend:
+              service:
+                name: store-frontend
+                port:
+                  number: 8080
+          - path: /ranking
+            pathType: Prefix
+            backend:
+              service:
+                name: ranking-frontend
+                port:
+                  number: 8080
+          - path: /game
+            pathType: Prefix
+            backend:
+              service:
+                name: game-frontend
+                port:
+                  number: 8080
+          - path: /assets
+            pathType: Prefix
+            backend:
+              service:
+                name: assets-static
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-frontend
+                port:
+                  number: 8080
