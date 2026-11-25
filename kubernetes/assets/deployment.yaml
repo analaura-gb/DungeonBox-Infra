@@ -37,7 +37,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-              readOnly: true
             - name: config
               mountPath: /etc/nginx/conf.d
               readOnly: true

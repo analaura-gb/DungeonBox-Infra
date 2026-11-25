@@ -303,16 +303,37 @@ Os caminhos ficam gravados no banco, em `image_url`, como caminhos relativos
 (`/assets/catalog/iron-will.png`). Então quem serve `/assets/` pode mudar sem
 tocar no banco nem no frontend.
 
-A arte é enviada direto para o volume, por cópia. O caminho mais curto, do
-notebook, dispensa saber onde o `local-path` guardou o diretório:
+A arte é enviada direto para o volume, por cópia, sem passar por deploy nenhum.
+O nome do pod muda a cada rollout, então vale resolvê-lo na hora:
 
 ```bash
-kubectl cp arte.png -n dungeonbox <pod>:/data/assets/catalog/arte.png
+pod=$(kubectl get pod -n dungeonbox -l app.kubernetes.io/name=assets-static -o jsonpath='{.items[0].metadata.name}')
 ```
 
-O nginx roda como uid 101 e monta o volume somente leitura, então o arquivo
-precisa estar legível por todos — um arquivo copiado como root sem permissão de
-leitura vira 403, não 404, e o sintoma não aponta para a causa.
+O volume nasce vazio, e o `kubectl cp` não cria diretório intermediário. Uma
+árvore local inteira resolve a estrutura de uma vez:
+
+```bash
+kubectl cp ./assets -n dungeonbox "$pod":/data/
+```
+
+Para um arquivo só, o diretório precisa existir antes:
+
+```bash
+kubectl exec -n dungeonbox "$pod" -- mkdir -p /data/assets/catalog
+kubectl cp arte.png -n dungeonbox "$pod":/data/assets/catalog/arte.png
+```
+
+O mount do volume **não** é somente leitura, e é por isso que a cópia funciona.
+A configuração do nginx continua sendo, porque vem de ConfigMap e nada deve
+escrever nela. A troca é consciente: um nginx comprometido poderia sobrescrever
+arte, que é o ativo menos sensível aqui. O que ela compra é a atualização de arte
+ser um comando em vez de quatro.
+
+Os arquivos copiados assim nascem com o uid 101 do próprio nginx, então não há
+permissão a ajustar. Escrever direto no diretório do `local-path` na tvbox-01
+também funciona, mas aí o arquivo nasce do root e precisa de `chmod a+rX`, senão
+dá 403 em vez de 404 — e o sintoma não aponta para a causa.
 
 Como não há cópia em repositório, **o volume é a fonte da verdade da arte**. É o
 que o torna o segundo ponto a precisar de backup.
