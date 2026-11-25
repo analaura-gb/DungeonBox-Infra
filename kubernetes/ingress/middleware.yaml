@@ -1,0 +1,25 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: root-to-auth
+  namespace: dungeonbox
+  labels:
+    app.kubernetes.io/part-of: dungeonbox
+spec:
+  redirectRegex:
+    regex: ^https?://([^/]+)/?$
+    replacement: https://${1}/auth/
+    permanent: false
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: module-trailing-slash
+  namespace: dungeonbox
+  labels:
+    app.kubernetes.io/part-of: dungeonbox
+spec:
+  redirectRegex:
+    regex: ^https?://([^/]+)/(auth|store|ranking|game)$
+    replacement: https://${1}/${2}/
+    permanent: false

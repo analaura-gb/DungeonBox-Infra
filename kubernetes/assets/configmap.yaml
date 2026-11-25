@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: assets-static-config
+  namespace: dungeonbox
+  labels:
+    app.kubernetes.io/name: assets-static
+    app.kubernetes.io/part-of: dungeonbox
+data:
+  default.conf: |
+    server {
+        listen 8080;
+        server_name _;
+
+        root /data;
+
+        location = /healthz {
+            access_log off;
+            default_type text/plain;
+            return 200 "ok\n";
+        }
+
+        location /assets/ {
+            etag on;
+            add_header Cache-Control "public, max-age=60, must-revalidate";
+        }
+
+        location / {
+            return 404;
+        }
+    }

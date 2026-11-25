@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-backend-config
+  namespace: dungeonbox
+  labels:
+    app.kubernetes.io/name: auth-backend
+    app.kubernetes.io/part-of: dungeonbox
+data:
+  COOKIE_SECURE: "true"
+  STORE_API_URL: http://store-backend:3001

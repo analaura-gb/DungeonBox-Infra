@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  namespace: dungeonbox
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: dungeonbox
+data:
+  01-databases.sql: |
+    CREATE DATABASE auth_db;
+    CREATE DATABASE store_db;
+    CREATE DATABASE ranking_db;
+    CREATE DATABASE game_db;
