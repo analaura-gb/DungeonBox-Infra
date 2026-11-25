@@ -304,6 +304,14 @@ Os caminhos ficam gravados no banco, em `image_url`, como caminhos relativos
 tocar no banco nem no frontend.
 
 A arte é enviada direto para o volume, por cópia, sem passar por deploy nenhum.
+
+Os comandos rodam de onde o `kubectl` alcança o cluster. Se o kubeconfig estiver
+só no `tvbox-master`, os arquivos passam por ele primeiro:
+
+```bash
+scp -r ./assets aluno@tvbox-master:/tmp/
+```
+
 O nome do pod muda a cada rollout, então vale resolvê-lo na hora:
 
 ```bash
@@ -311,17 +319,23 @@ pod=$(kubectl get pod -n dungeonbox -l app.kubernetes.io/name=assets-static -o j
 ```
 
 O volume nasce vazio, e o `kubectl cp` não cria diretório intermediário. Uma
-árvore local inteira resolve a estrutura de uma vez:
+árvore inteira resolve a estrutura de uma vez:
 
 ```bash
-kubectl cp ./assets -n dungeonbox "$pod":/data/
+kubectl cp /tmp/assets -n dungeonbox "$pod":/data/
 ```
 
 Para um arquivo só, o diretório precisa existir antes:
 
 ```bash
 kubectl exec -n dungeonbox "$pod" -- mkdir -p /data/assets/catalog
-kubectl cp arte.png -n dungeonbox "$pod":/data/assets/catalog/arte.png
+kubectl cp /tmp/arte.png -n dungeonbox "$pod":/data/assets/catalog/arte.png
+```
+
+E a conferência, que lista o que chegou:
+
+```bash
+kubectl exec -n dungeonbox "$pod" -- find /data/assets -type f
 ```
 
 O mount do volume **não** é somente leitura, e é por isso que a cópia funciona.
