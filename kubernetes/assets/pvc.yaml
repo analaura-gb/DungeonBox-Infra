@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: assets-data
+  namespace: dungeonbox
+  labels:
+    app.kubernetes.io/name: assets-static
+    app.kubernetes.io/part-of: dungeonbox
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
