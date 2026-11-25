@@ -83,6 +83,25 @@ O placeholder é intencional. Se alguém aplicar um Deployment com `kubectl appl
 -f` em vez de `-k`, a tag inválida falha no pull em vez de rodar silenciosamente
 um build antigo.
 
+Preencher à mão é possível, mas o script faz as 12 de uma vez:
+
+```bash
+bash scripts/set-image-tags.sh --dry-run
+bash scripts/set-image-tags.sh
+```
+
+Ele lê os nomes das imagens dos próprios manifestos e, para cada uma, descobre a
+tag atual no registry: pega o digest a que `latest` aponta e procura qual das
+outras tags tem o mesmo digest. Essa é a tag do build mais recente, e por ser o
+SHA do commit ela diz de onde o build veio — o que um digest cru não diria.
+
+Como cada serviço tem sua própria entrada, serviços rebuildados em commits
+diferentes ficam com tags diferentes, que é o caso normal quando só alguns
+microserviços mudam num PR.
+
+Imagem privada ou sem `latest` ele não resolve: avisa, não mexe naquela entrada e
+sai com código 1. Rodar de novo depois de corrigir é seguro — ele é idempotente.
+
 **Os Secrets.** Seis, criados a partir dos `.example.yaml` irmãos. O
 `.gitignore` bloqueia qualquer `*secret*.yaml` que não seja `.example`, então o
 arquivo real fica só na máquina.
@@ -148,11 +167,15 @@ rodarem. Rodar as migrações antes de expor o Ingress evita isso.
 
 Depois da instalação, o ciclo normal é bem mais curto. O que repete é só isto:
 
-1. **Atualizar a tag** da imagem no bloco `images:` do `kustomization.yaml`. É
-   um arquivo só, para as 8 imagens da aplicação.
+1. **Atualizar as tags** com `bash scripts/set-image-tags.sh`, depois de o CD
+   publicar as imagens novas. Ele mexe só nas que mudaram.
 2. **Rodar a migração**, se o serviço ganhou migração nova. Antes do passo 3,
    para o schema estar pronto quando o código novo subir.
 3. **`kubectl apply -k kubernetes`**, que faz o rollout.
+
+Como o script regenera as tags a partir do registry, dar `git pull` no servidor
+não custa nada: os placeholders voltam e uma rodada do script os preenche de
+novo com o que está publicado.
 
 ```bash
 kubectl delete job auth-migrate -n dungeonbox --ignore-not-found
@@ -178,6 +201,7 @@ deploy nenhum. Veja a seção da arte.
 | passo | quando |
 |---|---|
 | rotular os nós | instalação, e se o cluster for reconstruído |
+| `set-image-tags.sh` | todo deploy, depois do CD |
 | `kubectl create namespace` | instalação |
 | os 6 Secrets | instalação, e quando um valor mudar |
 | `apply -k kubernetes` | todo deploy |
