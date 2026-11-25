@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: game-backend-config
+  namespace: dungeonbox
+  labels:
+    app.kubernetes.io/name: game-backend
+    app.kubernetes.io/part-of: dungeonbox
+data:
+  RANKING_API_URL: http://ranking-backend:3002
+  STORE_API_URL: http://store-backend:3001
